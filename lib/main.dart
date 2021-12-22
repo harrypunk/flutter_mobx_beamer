@@ -5,47 +5,43 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobx_beam/login_store.dart';
 
 void main() async {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 final loginStore = LoginStore();
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  MyApp({Key? key}) : super(key: key);
+
+  final routerDelegate = BeamerDelegate(
+    guards: [
+      /// if the user is authenticated
+      /// else send them to /login
+      BeamGuard(
+          pathPatterns: ['/postnew'],
+          check: (context, state) {
+            return loginStore.isLogged;
+          },
+          beamToNamed: (_, __) => '/login'),
+
+      /// if the user is anything other than authenticated
+      /// else send them to /home
+      BeamGuard(
+          pathPatterns: ['/login'],
+          check: (context, state) {
+            return !loginStore.isLogged;
+          },
+          beamToNamed: (origin, target) {
+            return '/home';
+          }),
+    ],
+    initialPath: '/home',
+    locationBuilder: (routeInformation, _) => BeamerLocations(routeInformation),
+  );
 
   @override
   Widget build(BuildContext context) {
     //https://github.com/slovnicki/beamer/issues/218#issuecomment-826874856
-    final routerDelegate = BeamerDelegate(
-      guards: [
-        /// if the user is authenticated
-        /// else send them to /login
-        BeamGuard(
-            pathPatterns: ['/postnew'],
-            check: (context, state) {
-              return loginStore.isLogged;
-            },
-            beamToNamed: (_, __) => '/login'),
-
-        /// if the user is anything other than authenticated
-        /// else send them to /home
-        BeamGuard(
-            pathPatterns: ['/login'],
-            check: (context, state) {
-              return !loginStore.isLogged;
-            },
-            beamToNamed: (origin, target) {
-              var his = target.history;
-              for (var item in his) {
-                print("history ${item.routeInformation.location}");
-              }
-              return '/home';
-            }),
-      ],
-      initialPath: '/home',
-      locationBuilder: (routeInformation, _) =>
-          BeamerLocations(routeInformation),
-    );
     return Observer(builder: (_) {
       // must read observables in observer
       final _ = loginStore.isLogged;
