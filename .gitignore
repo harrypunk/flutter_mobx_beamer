@@ -51,3 +51,6 @@ app.*.map.json
 /web
 /.metadata
 analysis_options.yaml
+
+# mobx
+*.g.dart
